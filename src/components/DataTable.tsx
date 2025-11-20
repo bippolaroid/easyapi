@@ -1,4 +1,4 @@
-import { For, Show, createSignal, createEffect, onMount } from "solid-js";
+import { For, Show, createSignal, createEffect, onMount, Accessor, Setter } from "solid-js";
 import type { NestMap } from "../lib/types";
 import ValueCell from "./ValueCell";
 import EntryInput from "./EntryInput";
@@ -7,11 +7,17 @@ import { useDatabase } from "~/state/useDatabase";
 
 const db = useDatabase();
 
+interface PropertiesData {
+  get: Accessor<SelectedField>,
+  set: Setter<SelectedField>
+}
+
 type Props = {
   entries?: () => NestMap[];
+  propertiesData?: PropertiesData
 };
 
-type SelectedField = {
+export type SelectedField = {
   map: NestMap;
   keyName: string;
   setModified: (v: boolean) => void;
@@ -20,7 +26,6 @@ type SelectedField = {
 } | null;
 
 export default function DataTable(props: Props) {
-  const [selectedField, setSelectedField] = createSignal<SelectedField>(null);
   const [entries, setEntries] = createSignal<NestMap[]>([]);
   let firstEntryKeys: string[] = [];
   let fileInput!: HTMLInputElement;
@@ -90,7 +95,7 @@ export default function DataTable(props: Props) {
                               <ValueCell
                                 map={entry}
                                 keyName={key}
-                                onSelect={(info) => setSelectedField(info)}
+                                onSelect={(info) => props.propertiesData?.set(info)}
                               />
                             )
                           }
@@ -103,16 +108,7 @@ export default function DataTable(props: Props) {
             </div>
           </div>
         </Show>
-
       </section>
-      <Show when={selectedField()}>
-        <section class="w-80">
-          <EntryInput
-            valueObj={selectedField()!.map.get(selectedField()!.keyName) as any}
-            updateValue={selectedField()!.updateValue}
-          />
-          </section>
-      </Show>
     </div>
   );
 };

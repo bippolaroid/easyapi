@@ -11,7 +11,7 @@ export default function Button(props: ButtonIF) {
     switch (props.level) {
         case 0:
         default:
-            buttonClassList = "border border-green-600 bg-green-500 hover:bg-green-600 text-white";
+            buttonClassList = "bg-green-500 hover:bg-green-600 text-white";
             break;
         case 1:
             buttonClassList = "bg-neutral-200 hover:bg-neutral-300 text-neutral-700";
