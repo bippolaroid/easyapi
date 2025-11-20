@@ -1,7 +1,6 @@
 import { For, Show, createSignal, createEffect, onMount, Accessor, Setter } from "solid-js";
 import type { NestMap } from "../lib/types";
 import ValueCell from "./ValueCell";
-import EntryInput from "./EntryInput";
 import Button from "./Button";
 import { useDatabase } from "~/state/useDatabase";
 
@@ -47,6 +46,12 @@ export default function DataTable(props: Props) {
         db.loadJSON(JSON.parse(fileText), file.name);
       }
     }
+
+    window.addEventListener("click", (e) => {
+      if (!(e.target as HTMLElement).closest("#properties-panel")) {
+        props.propertiesData?.set(null);
+      }
+    })
   })
 
   return (
@@ -62,7 +67,7 @@ export default function DataTable(props: Props) {
             }}>Add dataset</Button></div>
           </div>}
         >
-          <div class="flex items-center justify-between p-4">
+          <div class="flex items-center justify-between p-12">
             <div class="text-2xl font-semibold text-neutral-900">{db.fileName()}</div>
             <div class="flex gap-2">
               <Button onClick={db.saveAll}>
@@ -73,7 +78,7 @@ export default function DataTable(props: Props) {
               </Button>
             </div>
           </div>
-          <div class="w-full p-4">
+          <div class="w-full p-6 pt-0">
             <div class="w-full overflow-x-auto border border-neutral-300" style="scrollbar-width: thin;">
               <table class="w-full table-auto bg-white divide-neutral-300 rounded-lg ">
                 <thead class="bg-neutral-300 text-neutral-500">
@@ -90,12 +95,18 @@ export default function DataTable(props: Props) {
                         <For each={Array.from(entry.entries())}>
                           {([key, value]) =>
                             value instanceof Map ? (
-                              <td class="px-3 py-2 text-neutral-700 italic">[nested]</td>
+                              <td       class="px-3 py-2 text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default whitespace-nowrap italic">{value.size} entries</td>
                             ) : (
                               <ValueCell
                                 map={entry}
                                 keyName={key}
-                                onSelect={(info) => props.propertiesData?.set(info)}
+                                onSelect={(newInfo) => {
+                                  const prevInfo = props.propertiesData?.get();
+                                  if (prevInfo && prevInfo.setSelected) {
+                                    prevInfo.setSelected(false);
+                                  }
+                                  props.propertiesData?.set(newInfo);
+                                }}
                               />
                             )
                           }

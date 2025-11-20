@@ -1,4 +1,4 @@
-import { createSignal, createEffect, Component, onMount } from "solid-js";
+import { createSignal, createEffect, onMount } from "solid-js";
 import type { NestMap, ValueObject } from "../lib/types";
 
 type OnSelectInfo = {
