@@ -1,19 +1,20 @@
-import { For, Show, createSignal, createEffect, onMount, Accessor, Setter } from "solid-js";
-import type { NestMap } from "../lib/types";
+import { For, Show, createSignal, createEffect, onMount, Accessor, Setter, JSXElement } from "solid-js";
+import type { NestMap, ValueObject } from "../lib/types";
 import ValueCell from "./ValueCell";
 import Button from "./Button";
 import { useDatabase } from "~/state/useDatabase";
+import MapCell from "./MapCell";
 
 const db = useDatabase();
 
-interface PropertiesData {
+export interface PropertiesData {
   get: Accessor<SelectedField>,
   set: Setter<SelectedField>
 }
 
 type Props = {
-  entries?: () => NestMap[];
-  propertiesData?: PropertiesData
+  entries?: NestMap[];
+  propertiesData: PropertiesData
 };
 
 export type SelectedField = {
@@ -26,13 +27,20 @@ export type SelectedField = {
 
 export default function DataTable(props: Props) {
   const [entries, setEntries] = createSignal<NestMap[]>([]);
+  const [subRow, setSubRow] = createSignal<JSXElement>();
   let firstEntryKeys: string[] = [];
   let fileInput!: HTMLInputElement;
 
+
   createEffect(() => {
-    if (!props.entries && db.entries().length > 0) {
+    if (props.entries && props.entries.length > 0) {
+      setEntries(props.entries);
+    } else {
       setEntries(db.entries());
-      firstEntryKeys = Array.from(db.entries()[0]).map((item) => item[0]);
+    }
+
+    if (entries().length > 0) {
+      firstEntryKeys = Array.from(entries()[0]).map((item) => item[0]);
     }
   })
 
@@ -52,7 +60,7 @@ export default function DataTable(props: Props) {
         props.propertiesData?.set(null);
       }
     })
-  })
+  });
 
   return (
     <div class="w-full flex">
@@ -90,29 +98,57 @@ export default function DataTable(props: Props) {
                 </thead>
                 <tbody>
                   <For each={entries()}>
-                    {(entry) => (
-                      <tr>
-                        <For each={Array.from(entry.entries())}>
-                          {([key, value]) =>
-                            value instanceof Map ? (
-                              <td       class="px-3 py-2 text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default whitespace-nowrap italic">{value.size} entries</td>
-                            ) : (
-                              <ValueCell
-                                map={entry}
-                                keyName={key}
-                                onSelect={(newInfo) => {
-                                  const prevInfo = props.propertiesData?.get();
-                                  if (prevInfo && prevInfo.setSelected) {
-                                    prevInfo.setSelected(false);
-                                  }
-                                  props.propertiesData?.set(newInfo);
-                                }}
-                              />
-                            )
-                          }
-                        </For>
-                      </tr>
-                    )}
+                    {(entry) => {
+                      const renderCells = ([key, value]: [key: string, value: NestMap | ValueObject]) => {
+                        if (value instanceof Map) {
+                          return (
+                            <MapCell
+                              map={value}
+                              keyName={key}
+                              subRow={setSubRow}
+                              propertiesData={props.propertiesData}
+                              onSelect={(newInfo) => {
+                                const prevInfo = props.propertiesData?.get();
+                                if (prevInfo && prevInfo.setSelected) {
+                                  prevInfo.setSelected(false);
+                                }
+                              }}
+                            />
+                          )
+                        }
+                        else {
+                          return (
+                            <ValueCell
+                              map={entry}
+                              keyName={key}
+                              onSelect={(newInfo) => {
+                                const prevInfo = props.propertiesData?.get();
+                                if (prevInfo && prevInfo.setSelected) {
+                                  prevInfo.setSelected(false);
+                                }
+                                props.propertiesData?.set(newInfo);
+                              }}
+                            />
+                          )
+                        }
+                      }
+
+                      return (
+                        <>
+                          <tr>
+                            <For each={Array.from(entry.entries())}>
+                              {(item) => renderCells(item) as Element}
+                            </For>
+                          </tr>
+                          <Show when={subRow()}>
+                            <div class="p-4 w-full">
+                              {subRow()}
+                            </div>
+                          </Show>
+                        </>
+                      )
+                    }
+                    }
                   </For>
                 </tbody>
               </table>
