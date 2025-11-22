@@ -101,6 +101,9 @@ export default function DataTable(props: Props) {
                     {(entry) => {
                       const renderCells = ([key, value]: [key: string, value: NestMap | ValueObject]) => {
                         if (value instanceof Map) {
+                          for(const entry of value.entries()) {
+                            console.log(entry[1]);
+                          }
                           return (
                             <MapCell
                               map={value}
