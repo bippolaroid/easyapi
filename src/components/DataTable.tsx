@@ -15,6 +15,7 @@ export interface PropertiesData {
 type Props = {
   entries?: NestMap[];
   propertiesData: PropertiesData
+  isSubTable?: Boolean;
 };
 
 export type SelectedField = {
@@ -75,69 +76,84 @@ export default function DataTable(props: Props) {
             }}>Add dataset</Button></div>
           </div>}
         >
-          <div class="flex items-center justify-between p-12">
-            <div class="text-2xl font-semibold text-neutral-900">{db.fileName()}</div>
-            <div class="flex gap-2">
-              <Button onClick={db.saveAll}>
-                Save all entries
-              </Button>
-              <Button level={1} onClick={db.exportJSON}>
-                Export JSON
-              </Button>
+          <Show when={!props.isSubTable}>
+            <div class="flex items-center justify-between p-12">
+              <div class="text-2xl font-semibold text-neutral-900">{db.fileName()}</div>
+              <div class="flex gap-2">
+                <Button onClick={() => null}>
+                  Save all entries
+                </Button>
+                <Button level={1} onClick={() => null}>
+                  Export JSON
+                </Button>
+              </div>
             </div>
-          </div>
-          <div class="w-full p-6 pt-0">
-            <div class="w-full overflow-x-auto border border-neutral-300" style="scrollbar-width: thin;">
-              <table class="w-full table-auto bg-white divide-neutral-300 rounded-lg ">
-                <thead class="bg-neutral-300 text-neutral-500">
-                  <tr>
-                    <For each={firstEntryKeys}>
-                      {(key) => <th class="px-3 py-2 uppercase tracking-wider text-xs">{key}</th>}
-                    </For>
-                  </tr>
-                </thead>
-                <tbody>
-                  <For each={entries()}>
-                    {(entry) => {
-                      const keyEntries = Array.from(entry);
-                      return (
-                        <>
-                          <tr>
-                            <For each={keyEntries}>
-                              {([k, v]) => {
-                                if (!(v instanceof Map)) {
-                                  return <><ValueCell map={entry} keyName={k} onSelect={(info) => props.propertiesData.set(info)} /></>
-                                } else {
-                                  const keyEntriesTwo = Array.from(v);
-                                  for (const [k2, v2] of keyEntriesTwo) {
-                                    if (v2 instanceof Map) {
-                                      const keyEntriesThree = Array.from(v2);
-                                      for (const [k3, v3] of keyEntriesThree) {
-                                        if (!(v3 instanceof Map)) {
-                                          return (
-                                            <MapCell map={v2} keyName={k3} subRow={setSubRow} propertiesData={props.propertiesData} onSelect={() => null} />
-                                          )
-                                        }
-                                      }
-                                    }
-                                  }
-                                }
-                              }}
-                            </For>
-                          </tr>
-                          <Show when={subRow()}>
+          </Show>
+          <div class="w-full">
+            <div class="p-4">
+              <div class="w-full overflow-x-auto border border-neutral-300" style="scrollbar-width: thin;">
+                <table class="w-full table-auto bg-white divide-neutral-300 rounded-lg ">
+                  <thead class="bg-neutral-300 text-neutral-500">
+                    <tr>
+                      <For each={firstEntryKeys}>
+                        {(key) => <th class="px-3 py-2 uppercase tracking-wider text-xs">{key}</th>}
+                      </For>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <For each={entries()}>
+                      {(entry) => {
+                        const keyEntries = Array.from(entry);
+                        return (
+                          <>
                             <tr>
-                              <td colspan="18" class="p-4">
-                                {subRow()}
-                              </td>
+                              <For each={keyEntries}>
+                                {([k, v]) => {
+                                  function createCells(kvPair: [string, NestMap | ValueObject][]) {
+                                    return (
+                                      <>
+                                        <For each={kvPair}>
+                                          {([k, v]) => {
+                                            if (v instanceof Map) {
+                                              const mapToArr = Array.from(v.entries());
+                                              return <MapCell map={v} keyName={k} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={() => {
+                                                const prevInfo = props.propertiesData?.get();
+                                                if (prevInfo && prevInfo.setSelected) {
+                                                  prevInfo.setSelected(false);
+                                                }
+                                              }} />
+                                            } else {
+                                              return <><ValueCell map={entry} keyName={k} onSelect={(info) => {
+                                                const prevInfo = props.propertiesData?.get();
+                                                if (prevInfo && prevInfo.setSelected) {
+                                                  prevInfo.setSelected(false);
+                                                }
+                                                setSubRow();
+                                                props.propertiesData.set(info)
+                                              }} /></>
+                                            }
+                                          }}
+                                        </For></>
+                                    )
+                                  }
+                                  return createCells([[k, v]]);
+                                }}
+                              </For>
                             </tr>
-                          </Show>
-                        </>
-                      )
-                    }}
-                  </For>
-                </tbody>
-              </table>
+                            <Show when={subRow()}>
+                              <tr>
+                                <td colspan={999} class="p-4">
+                                  {subRow()}
+                                </td>
+                              </tr>
+                            </Show>
+                          </>
+                        )
+                      }}
+                    </For>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </Show>

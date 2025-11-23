@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onMount, JSXElement, Setter } from "solid-js";
+import { createSignal, createEffect, onMount, JSXElement, Setter, Accessor } from "solid-js";
 import type { NestMap } from "../lib/types";
 import DataTable, { PropertiesData } from "./DataTable";
 
@@ -13,7 +13,7 @@ type OnSelectInfo = {
 type Props = {
     map: NestMap;
     keyName: string;
-    subRow: Setter<JSXElement>;
+    subRow: { get: Accessor<JSXElement>, set: Setter<JSXElement> };
     propertiesData: PropertiesData;
     onSelect: (info: OnSelectInfo) => void;
 };
@@ -22,7 +22,6 @@ export default function MapCell(props: Props) {
     const [selected, setSelected] = createSignal(false);
     const [modified, setModified] = createSignal(false);
     const [text, setText] = createSignal<string>(`${(props.map as NestMap).size.toString()} entries`);
-
 
     let tableCell!: HTMLTableCellElement;
 
@@ -33,26 +32,40 @@ export default function MapCell(props: Props) {
     });
 
     createEffect(() => {
+        if (!props.subRow.get()) {
+            tableCell.classList.remove("bg-neutral-100");
+            tableCell.classList.remove("text-neutral-500");
+            setSelected(false);
+        }
+    })
+
+    createEffect(() => {
         if (selected()) {
             tableCell.classList.add("bg-neutral-100");
             tableCell.classList.add("text-neutral-500");
-            const entries = [props.map];
+            const tempArr: NestMap[] = [];
+            props.map.forEach((item) => {
+                if (item instanceof Map) {
+                    tempArr.push(item);
+                }
+            })
             const newTable = (
                 <>
-                    <DataTable entries={entries} propertiesData={props.propertiesData} />
+                    <DataTable entries={tempArr} isSubTable={true} propertiesData={props.propertiesData} />
                 </>
             )
-            props.subRow(newTable)
+            props.subRow.set(newTable)
         } else {
             tableCell.classList.remove("bg-neutral-100");
             tableCell.classList.remove("text-neutral-500");
-            props.subRow();
+            props.subRow.set();
         }
     })
 
     onMount(() => {
-        window.addEventListener("click", () => {
-            if (selected()) {
+        window.addEventListener("click", (e) => {
+            const target = e.target as HTMLElement;
+            if (selected() && !target.closest("#properties-panel")) {
                 setSelected(false);
             }
         })

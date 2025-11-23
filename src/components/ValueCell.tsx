@@ -42,8 +42,9 @@ export default function ValueCell(props: Props) {
   })
 
   onMount(() => {
-    window.addEventListener("click", () => {
-      if (selected()) {
+    window.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (selected() && !target.closest("#properties-panel")) {
         setSelected(false);
       }
     })
