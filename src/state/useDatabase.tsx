@@ -55,7 +55,7 @@ export function useDatabase() {
           const updatedCurrent =
             typeof v.newValue === "string" && v.newValue.length > 0
               ?
-                coerceToOriginalType(v.currentValue, v.newValue)
+              coerceToOriginalType(v.currentValue, v.newValue)
               : v.currentValue;
 
           const updatedHistory =

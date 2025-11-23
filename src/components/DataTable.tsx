@@ -99,59 +99,42 @@ export default function DataTable(props: Props) {
                 <tbody>
                   <For each={entries()}>
                     {(entry) => {
-                      const renderCells = ([key, value]: [key: string, value: NestMap | ValueObject]) => {
-                        if (value instanceof Map) {
-                          for(const entry of value.entries()) {
-                            console.log(entry[1]);
-                          }
-                          return (
-                            <MapCell
-                              map={value}
-                              keyName={key}
-                              subRow={setSubRow}
-                              propertiesData={props.propertiesData}
-                              onSelect={(newInfo) => {
-                                const prevInfo = props.propertiesData?.get();
-                                if (prevInfo && prevInfo.setSelected) {
-                                  prevInfo.setSelected(false);
-                                }
-                              }}
-                            />
-                          )
-                        }
-                        else {
-                          return (
-                            <ValueCell
-                              map={entry}
-                              keyName={key}
-                              onSelect={(newInfo) => {
-                                const prevInfo = props.propertiesData?.get();
-                                if (prevInfo && prevInfo.setSelected) {
-                                  prevInfo.setSelected(false);
-                                }
-                                props.propertiesData?.set(newInfo);
-                              }}
-                            />
-                          )
-                        }
-                      }
-
+                      const keyEntries = Array.from(entry);
                       return (
                         <>
                           <tr>
-                            <For each={Array.from(entry.entries())}>
-                              {(item) => renderCells(item) as Element}
+                            <For each={keyEntries}>
+                              {([k, v]) => {
+                                if (!(v instanceof Map)) {
+                                  return <><ValueCell map={entry} keyName={k} onSelect={(info) => props.propertiesData.set(info)} /></>
+                                } else {
+                                  const keyEntriesTwo = Array.from(v);
+                                  for (const [k2, v2] of keyEntriesTwo) {
+                                    if (v2 instanceof Map) {
+                                      const keyEntriesThree = Array.from(v2);
+                                      for (const [k3, v3] of keyEntriesThree) {
+                                        if (!(v3 instanceof Map)) {
+                                          return (
+                                            <MapCell map={v2} keyName={k3} subRow={setSubRow} propertiesData={props.propertiesData} onSelect={() => null} />
+                                          )
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }}
                             </For>
                           </tr>
                           <Show when={subRow()}>
-                            <div class="p-4 w-full">
-                              {subRow()}
-                            </div>
+                            <tr>
+                              <td colspan="18" class="p-4">
+                                {subRow()}
+                              </td>
+                            </tr>
                           </Show>
                         </>
                       )
-                    }
-                    }
+                    }}
                   </For>
                 </tbody>
               </table>

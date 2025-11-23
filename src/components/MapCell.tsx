@@ -37,7 +37,6 @@ export default function MapCell(props: Props) {
             tableCell.classList.add("bg-neutral-100");
             tableCell.classList.add("text-neutral-500");
             const entries = [props.map];
-            console.log(entries);
             const newTable = (
                 <>
                     <DataTable entries={entries} propertiesData={props.propertiesData} />
