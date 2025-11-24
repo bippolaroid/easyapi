@@ -32,17 +32,7 @@ export default function MapCell(props: Props) {
     });
 
     createEffect(() => {
-        if (!props.subRow.get()) {
-            tableCell.classList.remove("bg-neutral-100");
-            tableCell.classList.remove("text-neutral-500");
-            setSelected(false);
-        }
-    })
-
-    createEffect(() => {
         if (selected()) {
-            tableCell.classList.add("bg-neutral-100");
-            tableCell.classList.add("text-neutral-500");
             const tempArr: NestMap[] = [];
             props.map.forEach((item) => {
                 if (item instanceof Map) {
@@ -55,10 +45,11 @@ export default function MapCell(props: Props) {
                 </>
             )
             props.subRow.set(newTable)
+            tableCell.classList.add("bg-neutral-100");
+            tableCell.classList.add("text-neutral-500");
         } else {
             tableCell.classList.remove("bg-neutral-100");
             tableCell.classList.remove("text-neutral-500");
-            props.subRow.set();
         }
     })
 
@@ -87,10 +78,12 @@ export default function MapCell(props: Props) {
     return (
         <td
             ref={tableCell}
-            class="px-3 py-2 text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default whitespace-nowrap"
+            class="p-4 min-w-36 max-w-2xl text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default"
             onClick={handleClick}
         >
-            {text()}
+            <div class="mx-auto w-fit text-wrap break-keep">
+                {text()}
+            </div>
         </td>
     );
 };

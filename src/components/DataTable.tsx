@@ -16,6 +16,7 @@ type Props = {
   entries?: NestMap[];
   propertiesData: PropertiesData
   isSubTable?: Boolean;
+  filename?: string;
 };
 
 export type SelectedField = {
@@ -31,7 +32,6 @@ export default function DataTable(props: Props) {
   const [subRow, setSubRow] = createSignal<JSXElement>();
   let firstEntryKeys: string[] = [];
   let fileInput!: HTMLInputElement;
-
 
   createEffect(() => {
     if (props.entries && props.entries.length > 0) {
@@ -53,6 +53,7 @@ export default function DataTable(props: Props) {
         const file = fileInput.files[0];
         const fileText = await file.text();
         db.loadJSON(JSON.parse(fileText), file.name);
+        if (!props.filename) props.filename = file.name;
       }
     }
 
@@ -62,6 +63,42 @@ export default function DataTable(props: Props) {
       }
     })
   });
+
+  function remapJson(entries: NestMap, exportMap: Map<string, string | Object>) {
+    const entryObj = Object.fromEntries(entries);
+    for (const key in entryObj) {
+      if (entryObj[key] instanceof Map) {
+        const tempArr = [];
+        for (const key2 of entryObj[key]) {
+          if (key2[1] instanceof Map) {
+            const subMap = new Map();
+            remapJson(key2[1] as NestMap, subMap)
+            tempArr.push(Object.fromEntries(subMap));
+          }
+        }
+        exportMap.set(key, tempArr);
+      } else {
+        exportMap.set(key, entryObj[key].currentValue)
+      }
+    }
+  }
+
+  function exportJson() {
+    const exportEntries = [];
+    for (const entry of entries()) {
+      const exportMap = new Map();
+      remapJson(entry, exportMap);
+      exportEntries.push(Object.fromEntries(exportMap));
+    }
+    const json = JSON.stringify(exportEntries);
+    const blob = new Blob([json], { type: "application/json" });
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = props.filename || "db";
+    link.click();
+    URL.revokeObjectURL(blobUrl);
+  }
 
   return (
     <div class="w-full flex">
@@ -83,7 +120,7 @@ export default function DataTable(props: Props) {
                 <Button onClick={() => null}>
                   Save all entries
                 </Button>
-                <Button level={1} onClick={() => null}>
+                <Button level={1} onClick={() => exportJson()}>
                   Export JSON
                 </Button>
               </div>
@@ -115,11 +152,13 @@ export default function DataTable(props: Props) {
                                         <For each={kvPair}>
                                           {([k, v]) => {
                                             if (v instanceof Map) {
-                                              return <MapCell map={v} keyName={k} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={() => {
+                                              return <MapCell map={v} keyName={k} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={(info) => {
                                                 const prevInfo = props.propertiesData?.get();
                                                 if (prevInfo && prevInfo.setSelected) {
+                                                  props.propertiesData.set(null);
                                                   prevInfo.setSelected(false);
                                                 }
+                                                props.propertiesData.set(info)
                                               }} />
                                             } else {
                                               return <><ValueCell map={entry} keyName={k} onSelect={(info) => {
