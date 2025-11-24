@@ -89,10 +89,10 @@ export default function DataTable(props: Props) {
               </div>
             </div>
           </Show>
-          <div class="w-full">
+          <div class={`${props.isSubTable ? `w-fit` : `w-full`} ml-auto`}>
             <div class="p-4">
-              <div class="w-full overflow-x-auto border border-neutral-300" style="scrollbar-width: thin;">
-                <table class="w-full table-auto bg-white divide-neutral-300 rounded-lg ">
+              <div class={`${props.isSubTable ? `w-fit` : `w-full`} overflow-x-auto border border-neutral-300`} style="scrollbar-width: thin;">
+                <table class={`${props.isSubTable ? `w-fit` : `w-full`} table-auto bg-white divide-neutral-300 rounded-lg`}>
                   <thead class="bg-neutral-300 text-neutral-500">
                     <tr>
                       <For each={firstEntryKeys}>
@@ -125,6 +125,7 @@ export default function DataTable(props: Props) {
                                               return <><ValueCell map={entry} keyName={k} onSelect={(info) => {
                                                 const prevInfo = props.propertiesData?.get();
                                                 if (prevInfo && prevInfo.setSelected) {
+                                                  props.propertiesData.set(null);
                                                   prevInfo.setSelected(false);
                                                 }
                                                 setSubRow();

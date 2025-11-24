@@ -1,7 +1,7 @@
 import { createEffect, createSignal, Show } from "solid-js";
 import DataTable, { SelectedField } from "~/components/DataTable";
 import EntryInput from "~/components/EntryInput";
-import { ValueObject } from "~/lib/types";
+import { Primitive, ValueObject } from "~/lib/types";
 
 export default function EditorPage() {
   const [propertiesData, setPropertiesData] = createSignal<SelectedField>(null);
@@ -25,7 +25,7 @@ export default function EditorPage() {
       <div class="w-full flex gap-4 h-full">
         <div class="flex-1 min-w-0"><DataTable propertiesData={{ get: propertiesData, set: setPropertiesData }} /></div>
         <Show when={propertiesKeyname() && propertiesValue()}>
-          <div id="properties-panel" class="flex flex-col gap-6 w-[32%] max-w-[32%] min-w-[280px] border border-neutral-200 bg-white p-6 h-full">
+          <div id="properties-panel" class="flex flex-col gap-6 max-h-screen overflow-auto w-[32%] max-w-[32%] min-w-[280px] border border-neutral-200 bg-white p-6 h-full">
             <div class="flex flex-col">
               <span class="py-2 uppercase tracking-wider text-xs text-neutral-300 font-bold">Value</span>
               <EntryInput
@@ -35,14 +35,9 @@ export default function EditorPage() {
               />
             </div>
             <div class="flex flex-col">
-              <span class="py-2 uppercase tracking-wider text-xs text-neutral-300 font-bold">Preview</span>
-              <div class="wrap-break-word">
-                <Show when={propertiesValue()?.newValue} fallback={propertiesValue()?.currentValue}>
-                  <Show when={propertiesValue()?.newValue}>
-                    {propertiesValue()?.newValue}
-                  </Show>
-                </Show>
-              </div>
+              <Show when={propertiesValue()} fallback={<div>No preview available</div>}>
+                <PreviewPanel value={(propertiesValue()?.newValue ? propertiesValue()?.newValue : propertiesValue()?.currentValue) as string} />
+              </Show>
             </div>
           </div>
         </Show>
@@ -51,7 +46,41 @@ export default function EditorPage() {
   );
 }
 
-const PreviewPanel = (value: string) => {
-  const renderTypes = [".jpg", ".jpeg", ".png", ".webp", ".webm", ".mp4", ".gif", ".svg"]
+const PreviewPanel = (props: { value: Primitive }) => {
+  const imageTypes = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"]
+  const videoTypes = [".mp4", ".webm"];
+  const embedTypes = ["vimeo"];
 
+  const wrapper = document.createElement("section");
+  wrapper.className = "wrap-break-word";
+
+  if (typeof props.value === "string" && props.value.length > 0 && !Number.isInteger(Number(props.value))) {
+    let el;
+    for (const imageType of imageTypes) {
+      if (props.value.includes(imageType)) {
+        el = <img class="max-w-72" src={props.value} /> as HTMLImageElement;
+      }
+    }
+    for (const videoType of videoTypes) {
+      if (props.value.includes(videoType)) {
+        el = <video src={props.value}></video> as HTMLVideoElement;
+      }
+    }
+    for (const embedType of embedTypes) {
+      if (props.value.includes(embedType)) {
+        el = <iframe class="w-full aspect-video" src={props.value}></iframe> as HTMLIFrameElement;
+      }
+    }
+    if (!el) {
+      wrapper.textContent = props.value;
+    } else {
+      wrapper.appendChild(el);
+    }
+    return (
+      <>
+        <div class="w-full flex justify-between items-center"><span class="py-2 uppercase tracking-wider text-xs text-neutral-300 font-bold">Preview</span><div class="text-xs">test</div></div>
+        {wrapper}
+      </>
+    );
+  }
 }
