@@ -16,6 +16,7 @@ type Props = {
     subRow: { get: Accessor<JSXElement>, set: Setter<JSXElement> };
     propertiesData: PropertiesData;
     onSelect: (info: OnSelectInfo) => void;
+    sticky?: boolean;
 };
 
 export default function MapCell(props: Props) {
@@ -78,7 +79,7 @@ export default function MapCell(props: Props) {
     return (
         <td
             ref={tableCell}
-            class="p-4 min-w-36 max-w-2xl text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default"
+            class={`${props.sticky ? `sticky left-0 ` : ``}p-4 min-w-36 max-w-2xl bg-white text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default`}
             onClick={handleClick}
         >
             <div class="mx-auto w-fit text-wrap break-keep">

@@ -17,7 +17,7 @@ type Props = {
   propertiesData: PropertiesData
   isSubTable?: Boolean;
   filename?: string;
-};
+}
 
 export type SelectedField = {
   map: NestMap;
@@ -30,6 +30,7 @@ export type SelectedField = {
 export default function DataTable(props: Props) {
   const [entries, setEntries] = createSignal<NestMap[]>([]);
   const [subRow, setSubRow] = createSignal<JSXElement>();
+  const stickyCells = [3]
   let firstEntryKeys: string[] = [];
   let fileInput!: HTMLInputElement;
 
@@ -102,17 +103,18 @@ export default function DataTable(props: Props) {
 
   return (
     <div class="w-full flex">
-      <section class="w-full border border-neutral-200 bg-white">
-        <Show
-          when={entries().length > 0}
-          fallback={<div class="p-12 w-full items-center gap-4 text-neutral-500 flex flex-col">
-            <input type="file" ref={fileInput} class="hidden" />
-            <span>No database selected.</span>
-            <div class="flex"><Button onClick={() => {
-              fileInput.click();
-            }}>Add dataset</Button></div>
-          </div>}
-        >
+
+      <Show
+        when={entries().length > 0}
+        fallback={<section class="w-full max-w-7xl mx-auto border border-neutral-200 bg-white"><div class="p-12 w-full items-center gap-4 text-neutral-500 flex flex-col">
+          <input type="file" ref={fileInput} class="hidden" />
+          <span>No database selected.</span>
+          <div class="flex"><Button onClick={() => {
+            fileInput.click();
+          }}>Add dataset</Button></div>
+        </div></section>}
+      >
+        <section class="w-full border border-neutral-200 bg-white">
           <Show when={!props.isSubTable}>
             <div class="flex items-center justify-between p-12">
               <div class="text-2xl font-semibold text-neutral-900">{db.fileName()}</div>
@@ -130,10 +132,10 @@ export default function DataTable(props: Props) {
             <div class="p-4">
               <div class={`${props.isSubTable ? `w-fit` : `w-full`} overflow-x-auto border border-neutral-300`} style="scrollbar-width: thin;">
                 <table class={`${props.isSubTable ? `w-fit` : `w-full`} table-auto bg-white divide-neutral-300 rounded-lg`}>
-                  <thead class="bg-neutral-300 text-neutral-500">
-                    <tr>
+                  <thead>
+                    <tr class="text-neutral-500">
                       <For each={firstEntryKeys}>
-                        {(key) => <th class="text-left px-3 py-2 uppercase tracking-wider text-xs">{key}</th>}
+                        {(key, idx) => <th class={`${stickyCells.includes(idx()) ? `sticky left-0 ` : ``}bg-neutral-300 text-left px-3 py-2 uppercase tracking-wider text-xs`}>{key}</th>}
                       </For>
                     </tr>
                   </thead>
@@ -141,6 +143,7 @@ export default function DataTable(props: Props) {
                     <For each={entries()}>
                       {(entry) => {
                         const keyEntries = Array.from(entry);
+                        let stickyCell = -1;
                         return (
                           <>
                             <tr>
@@ -151,8 +154,9 @@ export default function DataTable(props: Props) {
                                       <>
                                         <For each={kvPair}>
                                           {([k, v]) => {
+                                            stickyCell += 1;
                                             if (v instanceof Map) {
-                                              return <MapCell map={v} keyName={k} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={(info) => {
+                                              return <MapCell sticky={stickyCells.includes(stickyCell) ? true : false} map={v} keyName={k} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={(info) => {
                                                 const prevInfo = props.propertiesData?.get();
                                                 if (prevInfo && prevInfo.setSelected) {
                                                   props.propertiesData.set(null);
@@ -161,7 +165,7 @@ export default function DataTable(props: Props) {
                                                 props.propertiesData.set(info)
                                               }} />
                                             } else {
-                                              return <><ValueCell map={entry} keyName={k} onSelect={(info) => {
+                                              return <ValueCell sticky={stickyCells.includes(stickyCell) ? true : false} map={entry} keyName={k} onSelect={(info) => {
                                                 const prevInfo = props.propertiesData?.get();
                                                 if (prevInfo && prevInfo.setSelected) {
                                                   props.propertiesData.set(null);
@@ -169,7 +173,7 @@ export default function DataTable(props: Props) {
                                                 }
                                                 setSubRow();
                                                 props.propertiesData.set(info)
-                                              }} /></>
+                                              }} />
                                             }
                                           }}
                                         </For></>
@@ -195,8 +199,8 @@ export default function DataTable(props: Props) {
               </div>
             </div>
           </div>
-        </Show>
-      </section>
+        </section>
+      </Show>
     </div>
   );
 };

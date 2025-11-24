@@ -1,4 +1,4 @@
-import { Match,  Switch, type Component } from "solid-js";
+import { Match, Switch, type Component } from "solid-js";
 import type { ValueObject } from "../lib/types";
 
 type Props = {
