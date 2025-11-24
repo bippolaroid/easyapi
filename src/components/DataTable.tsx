@@ -96,7 +96,7 @@ export default function DataTable(props: Props) {
                   <thead class="bg-neutral-300 text-neutral-500">
                     <tr>
                       <For each={firstEntryKeys}>
-                        {(key) => <th class="px-3 py-2 uppercase tracking-wider text-xs">{key}</th>}
+                        {(key) => <th class="text-left px-3 py-2 uppercase tracking-wider text-xs">{key}</th>}
                       </For>
                     </tr>
                   </thead>
@@ -115,7 +115,6 @@ export default function DataTable(props: Props) {
                                         <For each={kvPair}>
                                           {([k, v]) => {
                                             if (v instanceof Map) {
-                                              const mapToArr = Array.from(v.entries());
                                               return <MapCell map={v} keyName={k} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={() => {
                                                 const prevInfo = props.propertiesData?.get();
                                                 if (prevInfo && prevInfo.setSelected) {
