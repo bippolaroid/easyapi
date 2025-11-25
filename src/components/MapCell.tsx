@@ -2,8 +2,8 @@ import { createSignal, createEffect, onMount, JSXElement, Setter, Accessor } fro
 import type { NestMap } from "../lib/types";
 import DataTable, { PropertiesData } from "./DataTable";
 
-type OnSelectInfo = {
-    map: NestMap;
+export type OnSelectInfo = {
+    map: NestMap[];
     keyName: string;
     setModified: (v: boolean) => void;
     setSelected: (v: boolean) => void;
@@ -11,7 +11,7 @@ type OnSelectInfo = {
 };
 
 type Props = {
-    map: NestMap;
+    map: NestMap[];
     keyName: string;
     subRow: { get: Accessor<JSXElement>, set: Setter<JSXElement> };
     propertiesData: PropertiesData;
@@ -22,33 +22,25 @@ type Props = {
 export default function MapCell(props: Props) {
     const [selected, setSelected] = createSignal(false);
     const [modified, setModified] = createSignal(false);
-    const [text, setText] = createSignal<string>(`${(props.map as NestMap).size.toString()} entries`);
+    const [text, setText] = createSignal<string>(`${props.map.length} entries`);
 
     let tableCell!: HTMLTableCellElement;
 
     createEffect(() => {
         if (modified()) {
-            setText(props.map.size.toString());
+            setText(props.map.length.toString());
         }
     });
 
     createEffect(() => {
         if (selected()) {
-            const tempArr: NestMap[] = [];
-            props.map.forEach((item) => {
-                if (item instanceof Map) {
-                    tempArr.push(item);
-                }
-            })
-            const newTable = (
-                <>
-                    <DataTable entries={tempArr} isSubTable={true} propertiesData={props.propertiesData} />
-                </>
-            )
-            props.subRow.set(newTable)
+            //props.subRow.set(<DataTable entries={props.map} isSubTable={true} propertiesData={props.propertiesData} />)
+            tableCell.classList.remove("bg-white");
             tableCell.classList.add("bg-neutral-100");
             tableCell.classList.add("text-neutral-500");
         } else {
+            //props.subRow.set(null);
+            tableCell.classList.add("bg-white");
             tableCell.classList.remove("bg-neutral-100");
             tableCell.classList.remove("text-neutral-500");
         }
@@ -56,6 +48,7 @@ export default function MapCell(props: Props) {
 
     onMount(() => {
         window.addEventListener("click", (e) => {
+            e.stopPropagation();
             const target = e.target as HTMLElement;
             if (selected() && !target.closest("#properties-panel")) {
                 setSelected(false);
@@ -65,7 +58,6 @@ export default function MapCell(props: Props) {
 
     function handleClick(e: MouseEvent) {
         e.stopPropagation();
-        setSelected(!selected());
         props.onSelect({
             map: props.map,
             keyName: props.keyName,

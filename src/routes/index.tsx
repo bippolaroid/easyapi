@@ -58,7 +58,7 @@ const PreviewPanel = (props: { value: Primitive }) => {
     let el;
     for (const imageType of imageTypes) {
       if (props.value.includes(imageType)) {
-        el = <img class="max-w-72" src={props.value} /> as HTMLImageElement;
+        el = <img class="w-full max-w-72" src={props.value} /> as HTMLImageElement;
       }
     }
     for (const videoType of videoTypes) {

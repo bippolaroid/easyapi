@@ -3,7 +3,7 @@ import type { NestMap, ValueObject } from "../lib/types";
 import ValueCell from "./ValueCell";
 import Button from "./Button";
 import { useDatabase } from "~/state/useDatabase";
-import MapCell from "./MapCell";
+import MapCell, { OnSelectInfo } from "./MapCell";
 
 const db = useDatabase();
 
@@ -30,6 +30,7 @@ export type SelectedField = {
 export default function DataTable(props: Props) {
   const [entries, setEntries] = createSignal<NestMap[]>([]);
   const [subRow, setSubRow] = createSignal<JSXElement>();
+  const [mapSelected, setMapSelected] = createSignal<OnSelectInfo>();
   const stickyCells = [3]
   let firstEntryKeys: string[] = [];
   let fileInput!: HTMLInputElement;
@@ -61,6 +62,8 @@ export default function DataTable(props: Props) {
     window.addEventListener("click", (e) => {
       if (!(e.target as HTMLElement).closest("#properties-panel")) {
         props.propertiesData?.set(null);
+        setMapSelected();
+        setSubRow();
       }
     })
   });
@@ -143,7 +146,8 @@ export default function DataTable(props: Props) {
                     <For each={entries()}>
                       {(entry) => {
                         const keyEntries = Array.from(entry);
-                        let stickyCell = -1;
+                        let stickyCellIndex = -1;
+                        let subCellIndex = -1;
                         return (
                           <>
                             <tr>
@@ -153,27 +157,60 @@ export default function DataTable(props: Props) {
                                     return (
                                       <>
                                         <For each={kvPair}>
-                                          {([k, v]) => {
-                                            stickyCell += 1;
-                                            if (v instanceof Map) {
-                                              return <MapCell sticky={stickyCells.includes(stickyCell) ? true : false} map={v} keyName={k} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={(info) => {
+                                          {([k2, v2]) => {
+                                            stickyCellIndex += 1;
+                                            if (v2 instanceof Map) {
+                                              const v2Arr = Array.from(v2.entries());
+                                              const v2ArrList: NestMap[] = [];
+                                              for (const [_, keyMap] of v2Arr) {
+                                                v2ArrList.push(keyMap as NestMap);
+                                              }
+                                              return <MapCell sticky={stickyCells.includes(stickyCellIndex) ? true : false} map={v2ArrList} keyName={k2} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={(info) => {
                                                 const prevInfo = props.propertiesData?.get();
                                                 if (prevInfo && prevInfo.setSelected) {
                                                   props.propertiesData.set(null);
                                                   prevInfo.setSelected(false);
                                                 }
-                                                props.propertiesData.set(info)
+                                                if (mapSelected() && mapSelected() !== info) {
+                                                  mapSelected()?.setSelected(false);
+                                                }
+                                                setSubRow(<DataTable entries={v2ArrList} isSubTable={true} propertiesData={props.propertiesData} />);
+                                                info.setSelected(true);
+                                                setMapSelected(info);
                                               }} />
                                             } else {
-                                              return <ValueCell sticky={stickyCells.includes(stickyCell) ? true : false} map={entry} keyName={k} onSelect={(info) => {
-                                                const prevInfo = props.propertiesData?.get();
-                                                if (prevInfo && prevInfo.setSelected) {
-                                                  props.propertiesData.set(null);
-                                                  prevInfo.setSelected(false);
-                                                }
-                                                setSubRow();
-                                                props.propertiesData.set(info)
-                                              }} />
+                                              if (props.isSubTable) {
+                                                subCellIndex += 1;
+                                                return <ValueCell sticky={stickyCells.includes(stickyCellIndex) ? true : false} map={entry} keyName={k2} onSelect={(info) => {
+                                                  const prevInfo = props.propertiesData?.get();
+                                                  if (prevInfo && prevInfo !== info) {
+                                                    props.propertiesData.set(null);
+                                                    prevInfo.setSelected(false);
+                                                  }
+                                                  if (mapSelected()) {
+                                                    mapSelected()?.setSelected(false);
+                                                  }
+                                                  setMapSelected();
+                                                  setSubRow();
+                                                  info.setSelected(true);
+                                                  props.propertiesData.set(info)
+                                                }} />
+                                              } else {
+                                                return <ValueCell sticky={stickyCells.includes(stickyCellIndex) ? true : false} map={entry} keyName={k2} onSelect={(info) => {
+                                                  const prevInfo = props.propertiesData?.get();
+                                                  if (prevInfo && prevInfo !== info) {
+                                                    props.propertiesData.set(null);
+                                                    prevInfo.setSelected(false);
+                                                  }
+                                                  if (mapSelected()) {
+                                                    mapSelected()?.setSelected(false);
+                                                  }
+                                                  setMapSelected();
+                                                  setSubRow();
+                                                  info.setSelected(true);
+                                                  props.propertiesData.set(info)
+                                                }} />
+                                              }
                                             }
                                           }}
                                         </For></>

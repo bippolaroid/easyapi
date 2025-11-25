@@ -24,6 +24,10 @@ export default function ValueCell(props: Props) {
 
   let tableCell!: HTMLTableCellElement;
 
+  if (valueObj.newValue) {
+    setModified(true);
+  }
+
   createEffect(() => {
     if (!modified()) {
       setText(String(valueObj?.currentValue ?? ""));
@@ -34,9 +38,11 @@ export default function ValueCell(props: Props) {
 
   createEffect(() => {
     if (selected()) {
+      tableCell.classList.remove("bg-white");
       tableCell.classList.add("bg-neutral-100");
       tableCell.classList.add("text-neutral-500");
     } else {
+      tableCell.classList.add("bg-white");
       tableCell.classList.remove("bg-neutral-100");
       tableCell.classList.remove("text-neutral-500");
     }
@@ -44,6 +50,7 @@ export default function ValueCell(props: Props) {
 
   onMount(() => {
     window.addEventListener("click", (e) => {
+      e.stopPropagation();
       const target = e.target as HTMLElement;
       if (selected() && !target.closest("#properties-panel")) {
         setSelected(false);
@@ -53,7 +60,6 @@ export default function ValueCell(props: Props) {
 
   function handleClick(e: MouseEvent) {
     e.stopPropagation();
-    setSelected(!selected());
     props.onSelect({
       map: props.map,
       keyName: props.keyName,
@@ -71,7 +77,7 @@ export default function ValueCell(props: Props) {
   return (
     <td
       ref={tableCell}
-      class={`${props.sticky ? `sticky left-0 ` : ``}p-4 min-w-36 max-w-2xl bg-white text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default`}
+      class={`${props.sticky ? `sticky left-0 outline-6 outline-neutral-300 ` : ``}p-4 min-w-36 max-w-2xl bg-white text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default`}
       onClick={handleClick}
     >
       <div class="mx-auto w-fit text-wrap break-keep">
