@@ -29,10 +29,17 @@ export default function ValueCell(props: Props) {
   }
 
   createEffect(() => {
+    function getSnippet(value: string) {
+      const charMax = 50;
+      const splitString = value.split("");
+      const newSplitString = splitString.filter((val, idx) => idx < charMax);
+      const newValue = newSplitString.join("");
+      return `${newValue} ${newSplitString.length === charMax ? `...` : ``}`
+    }
     if (!modified()) {
-      setText(String(valueObj?.currentValue ?? ""));
+      setText(getSnippet(String(valueObj?.currentValue ?? "")));
     } else {
-      setText(valueObj?.newValue?.length ? valueObj.newValue : String(valueObj?.currentValue ?? ""));
+      setText(getSnippet(valueObj?.newValue?.length ? valueObj.newValue : String(valueObj?.currentValue ?? "")));
     }
   });
 
@@ -77,10 +84,10 @@ export default function ValueCell(props: Props) {
   return (
     <td
       ref={tableCell}
-      class={`${props.sticky ? `sticky left-0 outline-6 outline-neutral-300 ` : ``}p-4 min-w-36 max-w-2xl bg-white text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default`}
+      class={`${props.sticky ? `sticky left-0 outline-6 outline-neutral-300 ` : ``}p-4 max-w-2xl overflow-hidden bg-white text-neutral-300 border-b not-last:border-r border-neutral-300 hover:text-neutral-500 cursor-default`}
       onClick={handleClick}
     >
-      <div class="mx-auto w-fit text-wrap break-keep">
+      <div class="leading-tight mx-auto w-fit whitespace-nowrap">
         {text()}
       </div>
     </td>

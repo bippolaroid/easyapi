@@ -7,7 +7,7 @@ type Props = {
   updateValue: (v: string) => void;
 };
 
-const charLimit = 60;
+const charLimit = 125;
 
 const EntryInput: Component<Props> = (props) => {
   return (

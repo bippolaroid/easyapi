@@ -28,7 +28,7 @@ export type SelectedField = {
 } | null;
 
 export default function DataTable(props: Props) {
-  const [entries, setEntries] = createSignal<NestMap[]>([]);
+  const [entries, setEntries] = createSignal<NestMap[]>(props.entries ?? db.entries());
   const [subRow, setSubRow] = createSignal<JSXElement>();
   const [mapSelected, setMapSelected] = createSignal<OnSelectInfo>();
   const stickyCells = [3]
@@ -36,26 +36,27 @@ export default function DataTable(props: Props) {
   let fileInput!: HTMLInputElement;
 
   createEffect(() => {
-    if (props.entries && props.entries.length > 0) {
-      setEntries(props.entries);
+    if (db.entries().length > 0 && !props.entries) {
+      firstEntryKeys = Array.from(db.entries()[0]).map((item) => item[0]);
+      setEntries(db.entries())
     } else {
-      setEntries(db.entries());
-    }
-
-    if (entries().length > 0) {
-      firstEntryKeys = Array.from(entries()[0]).map((item) => item[0]);
+      if (props.entries) {
+        firstEntryKeys = Array.from(props.entries[0]).map((item) => item[0]);
+      }
     }
   })
 
   onMount(async () => {
-    fileInput.accept = "application/json";
-    fileInput.multiple = true;
-    fileInput.onchange = async () => {
-      if (fileInput.files && fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const fileText = await file.text();
-        db.loadJSON(JSON.parse(fileText), file.name);
-        if (!props.filename) props.filename = file.name;
+    if (!props.isSubTable) {
+      fileInput.accept = "application/json";
+      fileInput.multiple = true;
+      fileInput.onchange = async () => {
+        if (fileInput.files && fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const fileText = await file.text();
+          db.loadJSON(JSON.parse(fileText), file.name);
+          if (!props.filename) props.filename = file.name;
+        }
       }
     }
 
@@ -89,7 +90,7 @@ export default function DataTable(props: Props) {
 
   function exportJson() {
     const exportEntries = [];
-    for (const entry of entries()) {
+    for (const entry of db.entries()) {
       const exportMap = new Map();
       remapJson(entry, exportMap);
       exportEntries.push(Object.fromEntries(exportMap));
@@ -227,10 +228,43 @@ export default function DataTable(props: Props) {
                                 </td>
                               </tr>
                             </Show>
+
                           </>
                         )
                       }}
                     </For>
+                    <tr>
+                      <td colSpan={999}><button class="m-4 h-12 w-12 flex items-center justify-center font-bold text-xl bg-neutral-50 border pb-[3px] border-neutral-300 hover:border-neutral-100 text-neutral-500 hover:text-neutral-300 cursor-pointer transition"
+                        onClick={() => {
+                          function deepClearEntries(map: NestMap): NestMap {
+                            const newMap = new Map();
+
+                            for (const [key, value] of map.entries()) {
+                              if (value instanceof Map) {
+                                newMap.set(key, deepClearEntries(value));
+                              } else {
+                                const newEntryValue = { ...value };
+
+                                if (typeof newEntryValue.currentValue === "number" && key === "id") {
+                                  newEntryValue.currentValue++;
+                                  newEntryValue.newValue = newEntryValue.currentValue;
+                                  newEntryValue.history = [];
+                                } else {
+                                  newEntryValue.currentValue = "";
+                                  newEntryValue.newValue = "";
+                                  newEntryValue.history = [];
+                                }
+
+                                newMap.set(key, newEntryValue);
+                              }
+                            }
+                            return newMap;
+                          }
+
+                          const newEntry = deepClearEntries(entries()[0]);
+                          db.setEntries([...entries(), newEntry]);
+                        }}>+</button></td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

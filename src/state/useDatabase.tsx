@@ -46,6 +46,7 @@ export function useDatabase() {
 
   return {
     entries,
+    setEntries,
     loadJSON,
     fileName,
   };
