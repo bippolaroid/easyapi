@@ -29,19 +29,26 @@ export type SelectedField = {
 
 export default function DataTable(props: Props) {
   const [entries, setEntries] = createSignal<NestMap[]>(props.entries ?? db.entries());
+  const [expanded, setExpanded] = createSignal<number | undefined>();
+  const [expandedMap, setExpandedMap] = createSignal<NestMap[]>();
   const [subRow, setSubRow] = createSignal<JSXElement>();
   const [mapSelected, setMapSelected] = createSignal<OnSelectInfo>();
+  const [firstEntryKeys, setFirstEntryKeys] = createSignal<string[]>();
   const stickyCells = [3]
-  let firstEntryKeys: string[] = [];
   let fileInput!: HTMLInputElement;
+
+  const SubRowEle = () => {
+    return subRow();
+  }
 
   createEffect(() => {
     if (db.entries().length > 0 && !props.entries) {
-      firstEntryKeys = Array.from(db.entries()[0]).map((item) => item[0]);
+      setFirstEntryKeys(Array.from(db.entries()[0]).map((item) => item[0]));
       setEntries(db.entries())
     } else {
       if (props.entries) {
-        firstEntryKeys = Array.from(props.entries[0]).map((item) => item[0]);
+        setEntries(props.entries)
+        setFirstEntryKeys(Array.from(entries()[0]).map((item) => item[0]));
       }
     }
   })
@@ -107,7 +114,6 @@ export default function DataTable(props: Props) {
 
   return (
     <div class="w-full flex">
-
       <Show
         when={entries().length > 0}
         fallback={<section class="w-full max-w-7xl mx-auto border border-neutral-200 bg-white"><div class="p-12 w-full items-center gap-4 text-neutral-500 flex flex-col">
@@ -138,14 +144,14 @@ export default function DataTable(props: Props) {
                 <table class={`${props.isSubTable ? `w-fit` : `w-full`} table-auto bg-white divide-neutral-300 rounded-lg`}>
                   <thead>
                     <tr class="text-neutral-500">
-                      <For each={firstEntryKeys}>
+                      <For each={firstEntryKeys()}>
                         {(key, idx) => <th class={`${stickyCells.includes(idx()) ? `sticky left-0 ` : ``}bg-neutral-300 text-left px-3 py-2 uppercase tracking-wider text-xs`}>{key}</th>}
                       </For>
                     </tr>
                   </thead>
                   <tbody>
                     <For each={entries()}>
-                      {(entry) => {
+                      {(entry, idx) => {
                         const keyEntries = Array.from(entry);
                         let stickyCellIndex = -1;
                         let subCellIndex = -1;
@@ -166,7 +172,7 @@ export default function DataTable(props: Props) {
                                               for (const [_, keyMap] of v2Arr) {
                                                 v2ArrList.push(keyMap as NestMap);
                                               }
-                                              return <MapCell sticky={stickyCells.includes(stickyCellIndex) ? true : false} map={v2ArrList} keyName={k2} subRow={{ get: subRow, set: setSubRow }} propertiesData={props.propertiesData} onSelect={(info) => {
+                                              return <MapCell sticky={stickyCells.includes(stickyCellIndex) ? true : false} isExpanded={setExpanded} map={v2ArrList} keyName={k2} propertiesData={props.propertiesData} onSelect={(info) => {
                                                 const prevInfo = props.propertiesData?.get();
                                                 if (prevInfo && prevInfo.setSelected) {
                                                   props.propertiesData.set(null);
@@ -175,13 +181,14 @@ export default function DataTable(props: Props) {
                                                 if (mapSelected() && mapSelected() !== info) {
                                                   mapSelected()?.setSelected(false);
                                                 }
-                                                setSubRow(<DataTable entries={v2ArrList} isSubTable={true} propertiesData={props.propertiesData} />);
+                                                setExpanded(idx());
+                                                setExpandedMap(v2ArrList);
                                                 info.setSelected(true);
                                                 setMapSelected(info);
                                               }} />
                                             } else {
+                                              subCellIndex += 1;
                                               if (props.isSubTable) {
-                                                subCellIndex += 1;
                                                 return <ValueCell sticky={stickyCells.includes(stickyCellIndex) ? true : false} map={entry} keyName={k2} onSelect={(info) => {
                                                   const prevInfo = props.propertiesData?.get();
                                                   if (prevInfo && prevInfo !== info) {
@@ -191,6 +198,7 @@ export default function DataTable(props: Props) {
                                                   if (mapSelected()) {
                                                     mapSelected()?.setSelected(false);
                                                   }
+                                                  setExpanded();
                                                   setMapSelected();
                                                   setSubRow();
                                                   info.setSelected(true);
@@ -206,6 +214,7 @@ export default function DataTable(props: Props) {
                                                   if (mapSelected()) {
                                                     mapSelected()?.setSelected(false);
                                                   }
+                                                  setExpanded();
                                                   setMapSelected();
                                                   setSubRow();
                                                   info.setSelected(true);
@@ -221,14 +230,13 @@ export default function DataTable(props: Props) {
                                 }}
                               </For>
                             </tr>
-                            <Show when={subRow()}>
+                            <Show when={expanded() === idx()}>
                               <tr>
-                                <td colspan={999} class="p-4">
-                                  {subRow()}
+                                <td colspan={999} class="">
+                                  <DataTable entries={expandedMap()} isSubTable={true} propertiesData={props.propertiesData} />
                                 </td>
                               </tr>
                             </Show>
-
                           </>
                         )
                       }}
@@ -241,10 +249,14 @@ export default function DataTable(props: Props) {
 
                             for (const [key, value] of map.entries()) {
                               if (value instanceof Map) {
-                                newMap.set(key, deepClearEntries(value));
+                                if (!value.get("0")) {
+                                  newMap.set(key, []);
+                                } else {
+                                  newMap.set(key, deepClearEntries(value));
+
+                                }
                               } else {
                                 const newEntryValue = { ...value };
-
                                 if (typeof newEntryValue.currentValue === "number" && key === "id") {
                                   newEntryValue.currentValue++;
                                   newEntryValue.newValue = newEntryValue.currentValue;

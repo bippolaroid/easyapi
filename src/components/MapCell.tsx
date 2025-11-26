@@ -13,7 +13,7 @@ export type OnSelectInfo = {
 type Props = {
     map: NestMap[];
     keyName: string;
-    subRow: { get: Accessor<JSXElement>, set: Setter<JSXElement> };
+    isExpanded: Setter<number | undefined>;
     propertiesData: PropertiesData;
     onSelect: (info: OnSelectInfo) => void;
     sticky?: boolean;
@@ -34,12 +34,10 @@ export default function MapCell(props: Props) {
 
     createEffect(() => {
         if (selected()) {
-            //props.subRow.set(<DataTable entries={props.map} isSubTable={true} propertiesData={props.propertiesData} />)
             tableCell.classList.remove("bg-white");
             tableCell.classList.add("bg-neutral-100");
             tableCell.classList.add("text-neutral-500");
         } else {
-            //props.subRow.set(null);
             tableCell.classList.add("bg-white");
             tableCell.classList.remove("bg-neutral-100");
             tableCell.classList.remove("text-neutral-500");
@@ -52,6 +50,7 @@ export default function MapCell(props: Props) {
             const target = e.target as HTMLElement;
             if (selected() && !target.closest("#properties-panel")) {
                 setSelected(false);
+                props.isExpanded();
             }
         })
     })
