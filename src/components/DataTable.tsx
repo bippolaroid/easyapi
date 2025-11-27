@@ -31,15 +31,10 @@ export default function DataTable(props: Props) {
   const [entries, setEntries] = createSignal<NestMap[]>(props.entries ?? db.entries());
   const [expanded, setExpanded] = createSignal<number | undefined>();
   const [expandedMap, setExpandedMap] = createSignal<NestMap[]>();
-  const [subRow, setSubRow] = createSignal<JSXElement>();
   const [mapSelected, setMapSelected] = createSignal<OnSelectInfo>();
   const [firstEntryKeys, setFirstEntryKeys] = createSignal<string[]>();
   const stickyCells = [3]
   let fileInput!: HTMLInputElement;
-
-  const SubRowEle = () => {
-    return subRow();
-  }
 
   createEffect(() => {
     if (db.entries().length > 0 && !props.entries) {
@@ -71,7 +66,6 @@ export default function DataTable(props: Props) {
       if (!(e.target as HTMLElement).closest("#properties-panel")) {
         props.propertiesData?.set(null);
         setMapSelected();
-        setSubRow();
       }
     })
   });
@@ -140,12 +134,12 @@ export default function DataTable(props: Props) {
           </Show>
           <div class={`${props.isSubTable ? `w-fit` : `w-full`} ml-auto`}>
             <div class="p-4">
-              <div class={`${props.isSubTable ? `w-fit` : `w-full`} overflow-x-auto border border-neutral-300`} style="scrollbar-width: thin;">
-                <table class={`${props.isSubTable ? `w-fit` : `w-full`} table-auto bg-white divide-neutral-300 rounded-lg`}>
+              <div class={`${props.isSubTable ? `w-fit` : `w-full`} max-h-[66dvh] overflow-auto border border-neutral-300`} style="scrollbar-width: thin;">
+                <table class={`${props.isSubTable ? `w-fit` : `w-full`} table-auto select-none bg-white divide-neutral-300 rounded-lg`}>
                   <thead>
                     <tr class="text-neutral-500">
                       <For each={firstEntryKeys()}>
-                        {(key, idx) => <th class={`${stickyCells.includes(idx()) ? `sticky left-0 ` : ``}bg-neutral-300 text-left px-3 py-2 uppercase tracking-wider text-xs`}>{key}</th>}
+                        {(key, idx) => <th class={`${stickyCells.includes(idx()) ? `left-0 z-10 ` : ``}bg-neutral-300 sticky top-0 text-left px-3 py-2 uppercase tracking-wider text-xs`}>{key}</th>}
                       </For>
                     </tr>
                   </thead>
@@ -200,7 +194,6 @@ export default function DataTable(props: Props) {
                                                   }
                                                   setExpanded();
                                                   setMapSelected();
-                                                  setSubRow();
                                                   info.setSelected(true);
                                                   props.propertiesData.set(info)
                                                 }} />
@@ -216,7 +209,6 @@ export default function DataTable(props: Props) {
                                                   }
                                                   setExpanded();
                                                   setMapSelected();
-                                                  setSubRow();
                                                   info.setSelected(true);
                                                   props.propertiesData.set(info)
                                                 }} />
@@ -273,7 +265,7 @@ export default function DataTable(props: Props) {
                             return newMap;
                           }
 
-                          const newEntry = deepClearEntries(entries()[0]);
+                          const newEntry = deepClearEntries(entries()[entries().length - 1]);
                           db.setEntries([...entries(), newEntry]);
                         }}>+</button></td>
                     </tr>

@@ -7,9 +7,14 @@ export function useDatabase() {
   const [entries, setEntries] = createSignal<NestMap[]>([]);
   const [fileName, setFileName] = createSignal<string>("");
 
-  function loadJSON(json: unknown[], name = "db.json") {
+  function loadJSON(json: unknown | unknown[], name = "db.json") {
     setFileName(name);
-    const mapped = json.map((entry) => mapEntry(entry as Record<string, any>));
+    let mapped: NestMap[];
+    if (Array.isArray(json)) {
+      mapped = json.map((entry) => mapEntry(entry as Record<string, any>));
+    } else {
+      mapped = [mapEntry(json as Record<string, any>)];
+    }
     setEntries(mapped);
   }
 

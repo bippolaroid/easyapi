@@ -20,12 +20,12 @@ export default function EditorPage() {
   })
 
   return (
-    <div class="pt-18 h-screen w-full bg-neutral-50 text-black flex flex-col p-4 gap-4">
+    <div class="pt-18 overflow-hidden h-screen w-full bg-neutral-50 text-black flex flex-col p-4 gap-4">
       <div class="flex items-center gap-1"><div class="flex items-center gap-2 border-b border-b-transparent hover:border-b-neutral-200 border-t border-t-transparent hover:border-t-neutral-50 cursor-pointer transition rounded-full text-sm px-4 py-2 bg-transparent hover:bg-neutral-100 text-neutral-500 hover:text-black"><div class="w-5.5 text-center pb-1 text-xs rounded-full bg-teal-200 border border-teal-500 text-teal-500">s</div>My Project</div><span>↦</span><div>s</div></div>
       <div class="w-full flex gap-4">
         <div class="flex-1 min-w-0"><DataTable propertiesData={{ get: propertiesData, set: setPropertiesData }} /></div>
         <Show when={propertiesKeyname() && propertiesValue()}>
-          <div id="properties-panel" class="flex flex-col gap-6 w-[32%] max-w-[32%] min-w-[280px] border border-neutral-200 bg-white p-6">
+          <div id="properties-panel" class="flex flex-col gap-6 w-[32%] max-w-[32%] min-w-[280px] max-h-[84.5dvh] overflow-y-auto border border-neutral-200 bg-white p-6">
             <div class="flex flex-col">
               <span class="py-2 uppercase tracking-wider text-xs text-neutral-300 font-bold">Value</span>
               <EntryInput
